@@ -669,53 +669,68 @@ impl UpdateAvailableHistoryCell {
 impl HistoryCell for UpdateAvailableHistoryCell {
     fn display_lines(&self, width: u16) -> Vec<Line<'static>> {
         use ratatui_macros::line;
-        use ratatui_macros::text;
-        let update_instruction = if let Some(update_action) = self.update_action {
-            line!["Run ", update_action.command_str().cyan(), " to update."]
+
+        let header = line![
+            padded_emoji("✨").bold().cyan(),
+            "Update available!".bold().cyan(),
+            " ",
+            format!("{CODEX_CLI_VERSION} -> {}", self.latest_version).bold(),
+        ];
+
+        let mut content_lines: Vec<Line<'static>> = vec![header];
+
+        if let Some(update_action) = self.update_action {
+            content_lines.push(Line::from("To update, run:"));
+            content_lines.push(line!["  ", update_action.command_str().cyan()]);
         } else {
-            line![
+            content_lines.push(line![
                 "See ",
                 "https://github.com/openai/codex".cyan().underlined(),
                 " for installation options."
-            ]
-        };
+            ]);
+        }
 
-        let content = text![
-            line![
-                padded_emoji("✨").bold().cyan(),
-                "Update available!".bold().cyan(),
-                " ",
-                format!("{CODEX_CLI_VERSION} -> {}", self.latest_version).bold(),
-            ],
-            update_instruction,
-            "",
-            "See full release notes:",
+        content_lines.push(Line::from(""));
+        content_lines.push(Line::from("See full release notes:"));
+        content_lines.push(Line::from(
             "https://github.com/openai/codex/releases/latest"
                 .cyan()
                 .underlined(),
-        ];
+        ));
 
-        let inner_width = content
-            .width()
+        let inner_width = content_lines
+            .iter()
+            .map(|l| {
+                l.iter()
+                    .map(|span| UnicodeWidthStr::width(span.content.as_ref()))
+                    .sum::<usize>()
+            })
+            .max()
+            .unwrap_or(0)
             .min(usize::from(width.saturating_sub(4)))
             .max(1);
-        with_border_with_inner_width(content.lines, inner_width)
+        with_border_with_inner_width(content_lines, inner_width)
     }
 
     fn raw_lines(&self) -> Vec<Line<'static>> {
-        let update_instruction = if let Some(update_action) = self.update_action {
-            format!("Run {} to update.", update_action.command_str())
-        } else {
-            "See https://github.com/openai/codex for installation options.".to_string()
-        };
-        vec![
+        let mut lines = vec![
             Line::from("Update available!"),
             Line::from(format!("{CODEX_CLI_VERSION} -> {}", self.latest_version)),
-            Line::from(update_instruction),
-            Line::from(""),
-            Line::from("See full release notes:"),
-            Line::from("https://github.com/openai/codex/releases/latest"),
-        ]
+        ];
+
+        if let Some(update_action) = self.update_action {
+            lines.push(Line::from("To update, run:"));
+            lines.push(Line::from(format!("  {}", update_action.command_str())));
+        } else {
+            lines.push(Line::from(
+                "See https://github.com/openai/codex for installation options.",
+            ));
+        }
+
+        lines.push(Line::from(""));
+        lines.push(Line::from("See full release notes:"));
+        lines.push(Line::from("https://github.com/openai/codex/releases/latest"));
+        lines
     }
 }
 
