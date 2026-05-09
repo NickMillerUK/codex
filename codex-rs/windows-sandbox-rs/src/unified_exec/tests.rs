@@ -229,13 +229,7 @@ fn legacy_non_tty_cmd_honors_deny_read_overrides() {
             vec![
                 "C:\\Windows\\System32\\cmd.exe".to_string(),
                 "/c".to_string(),
-                format!(
-                    "cd & dir & dir \"{}\" & type \"{public_rel}\" 2>&1",
-                    fixture_dir
-                        .file_name()
-                        .expect("fixture name")
-                        .to_string_lossy(),
-                ),
+                format!("type {public_rel} 2>&1"),
             ],
             cwd.as_path(),
             HashMap::new(),
@@ -268,7 +262,7 @@ fn legacy_non_tty_cmd_honors_deny_read_overrides() {
             vec![
                 "C:\\Windows\\System32\\cmd.exe".to_string(),
                 "/c".to_string(),
-                format!("type \"{public_rel}\" 2>&1"),
+                format!("type {public_rel} 2>&1"),
             ],
             cwd.as_path(),
             HashMap::new(),
@@ -294,7 +288,7 @@ fn legacy_non_tty_cmd_honors_deny_read_overrides() {
             vec![
                 "C:\\Windows\\System32\\cmd.exe".to_string(),
                 "/c".to_string(),
-                format!("type \"{secret_rel}\" 2>NUL"),
+                format!("type {secret_rel} 2>NUL"),
             ],
             cwd.as_path(),
             HashMap::new(),
