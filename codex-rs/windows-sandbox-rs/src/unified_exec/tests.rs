@@ -199,6 +199,8 @@ fn legacy_non_tty_cmd_honors_deny_read_overrides() {
         fs::create_dir_all(&fixture_dir).expect("create deny-read fixture");
         fs::write(&secret_path, "secret denied").expect("write secret");
         fs::write(&public_path, "public allowed").expect("write public");
+        let secret_command_path = dunce::canonicalize(&secret_path).expect("canonical secret");
+        let public_command_path = dunce::canonicalize(&public_path).expect("canonical public");
 
         let caps = load_or_create_cap_sids(codex_home.path()).expect("load caps");
         let generic_sid = LocalSid::from_string(&caps.workspace).expect("generic workspace SID");
@@ -221,7 +223,7 @@ fn legacy_non_tty_cmd_honors_deny_read_overrides() {
             vec![
                 "C:\\Windows\\System32\\cmd.exe".to_string(),
                 "/c".to_string(),
-                format!("type \"{}\" 2>&1", public_path.display()),
+                format!("type \"{}\" 2>&1", public_command_path.display()),
             ],
             cwd.as_path(),
             HashMap::new(),
@@ -254,7 +256,7 @@ fn legacy_non_tty_cmd_honors_deny_read_overrides() {
             vec![
                 "C:\\Windows\\System32\\cmd.exe".to_string(),
                 "/c".to_string(),
-                format!("type \"{}\" 2>&1", public_path.display()),
+                format!("type \"{}\" 2>&1", public_command_path.display()),
             ],
             cwd.as_path(),
             HashMap::new(),
@@ -280,7 +282,7 @@ fn legacy_non_tty_cmd_honors_deny_read_overrides() {
             vec![
                 "C:\\Windows\\System32\\cmd.exe".to_string(),
                 "/c".to_string(),
-                format!("type \"{}\" 2>NUL", secret_path.display()),
+                format!("type \"{}\" 2>NUL", secret_command_path.display()),
             ],
             cwd.as_path(),
             HashMap::new(),
