@@ -190,22 +190,20 @@ fn legacy_non_tty_cmd_honors_deny_read_overrides() {
         let cwd = sandbox_cwd();
         let codex_home = sandbox_home("legacy-non-tty-deny-read");
         let fixture_id = TEST_HOME_COUNTER.fetch_add(1, Ordering::Relaxed);
-        let fixture_dir = codex_home
-            .path()
-            .join(format!("legacy-non-tty-deny-read-fixture-{fixture_id}"));
+        let fixture_dir = cwd.join(format!("legacy-non-tty-deny-read-fixture-{fixture_id}"));
         let _ = fs::remove_dir_all(&fixture_dir);
         let secret_path = fixture_dir.join("secret.env");
         let public_path = fixture_dir.join("public.txt");
+        let secret_rel = secret_path.strip_prefix(&cwd).expect("relative secret");
+        let public_rel = public_path.strip_prefix(&cwd).expect("relative public");
         fs::create_dir_all(&fixture_dir).expect("create deny-read fixture");
         fs::write(&secret_path, "secret denied").expect("write secret");
         fs::write(&public_path, "public allowed").expect("write public");
-        let secret_command_path = dunce::canonicalize(&secret_path).expect("canonical secret");
-        let public_command_path = dunce::canonicalize(&public_path).expect("canonical public");
 
         let caps = load_or_create_cap_sids(codex_home.path()).expect("load caps");
         let generic_sid = LocalSid::from_string(&caps.workspace).expect("generic workspace SID");
         let workspace_sid = LocalSid::from_string(
-            &workspace_cap_sid_for_cwd(codex_home.path(), fixture_dir.as_path())
+            &workspace_cap_sid_for_cwd(codex_home.path(), cwd.as_path())
                 .expect("workspace SID string"),
         )
         .expect("workspace SID");
@@ -223,7 +221,7 @@ fn legacy_non_tty_cmd_honors_deny_read_overrides() {
             vec![
                 "C:\\Windows\\System32\\cmd.exe".to_string(),
                 "/c".to_string(),
-                format!("type \"{}\" 2>&1", public_command_path.display()),
+                format!("type \"{}\" 2>&1", public_rel.display()),
             ],
             cwd.as_path(),
             HashMap::new(),
@@ -256,7 +254,7 @@ fn legacy_non_tty_cmd_honors_deny_read_overrides() {
             vec![
                 "C:\\Windows\\System32\\cmd.exe".to_string(),
                 "/c".to_string(),
-                format!("type \"{}\" 2>&1", public_command_path.display()),
+                format!("type \"{}\" 2>&1", public_rel.display()),
             ],
             cwd.as_path(),
             HashMap::new(),
@@ -282,7 +280,7 @@ fn legacy_non_tty_cmd_honors_deny_read_overrides() {
             vec![
                 "C:\\Windows\\System32\\cmd.exe".to_string(),
                 "/c".to_string(),
-                format!("type \"{}\" 2>NUL", secret_command_path.display()),
+                format!("type \"{}\" 2>NUL", secret_rel.display()),
             ],
             cwd.as_path(),
             HashMap::new(),
