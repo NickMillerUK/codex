@@ -272,6 +272,15 @@ pub(crate) fn apply_legacy_session_acl_rules(
         } else {
             apply_deny_read_acls(additional_deny_read_paths, psid_generic.as_ptr())?
         };
+        if persist_aces && let Some(psid_workspace) = psid_workspace {
+            let workspace_cap_sid = workspace_cap_sid_for_cwd(codex_home, current_dir)?;
+            sync_persistent_deny_read_acls(
+                codex_home,
+                &workspace_cap_sid,
+                additional_deny_read_paths,
+                psid_workspace.as_ptr(),
+            )?;
+        }
         if !persist_aces {
             guards.extend(applied_deny_read_paths);
         }

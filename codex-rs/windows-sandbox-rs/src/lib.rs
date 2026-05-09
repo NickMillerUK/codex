@@ -513,6 +513,15 @@ mod windows_impl {
                     return Err(err);
                 }
             };
+            if persist_aces && let Some(psid_workspace) = psid_workspace {
+                let workspace_cap_sid = workspace_cap_sid_for_cwd(codex_home, cwd)?;
+                sync_persistent_deny_read_acls(
+                    codex_home,
+                    &workspace_cap_sid,
+                    additional_deny_read_paths,
+                    psid_workspace,
+                )?;
+            }
             if !persist_aces {
                 for path in applied_deny_read_paths {
                     guards.push((path, psid_generic));
