@@ -187,6 +187,7 @@ fn legacy_non_tty_cmd_honors_deny_read_overrides() {
     let _guard = legacy_process_test_guard();
     let runtime = current_thread_runtime();
     runtime.block_on(async move {
+        let cwd = sandbox_cwd();
         let codex_home = sandbox_home("legacy-non-tty-deny-read");
         let fixture_id = TEST_HOME_COUNTER.fetch_add(1, Ordering::Relaxed);
         let fixture_dir = codex_home
@@ -215,14 +216,14 @@ fn legacy_non_tty_cmd_honors_deny_read_overrides() {
 
         let public_read_without_deny = spawn_windows_sandbox_session_legacy(
             "workspace-write",
-            fixture_dir.as_path(),
+            cwd.as_path(),
             codex_home.path(),
             vec![
                 "C:\\Windows\\System32\\cmd.exe".to_string(),
                 "/c".to_string(),
-                "type \"public.txt\" 2>&1".to_string(),
+                format!("type \"{}\" 2>&1", public_path.display()),
             ],
-            fixture_dir.as_path(),
+            cwd.as_path(),
             HashMap::new(),
             Some(5_000),
             &[],
@@ -248,14 +249,14 @@ fn legacy_non_tty_cmd_honors_deny_read_overrides() {
 
         let public_read = spawn_windows_sandbox_session_legacy(
             "workspace-write",
-            fixture_dir.as_path(),
+            cwd.as_path(),
             codex_home.path(),
             vec![
                 "C:\\Windows\\System32\\cmd.exe".to_string(),
                 "/c".to_string(),
-                "type \"public.txt\" 2>&1".to_string(),
+                format!("type \"{}\" 2>&1", public_path.display()),
             ],
-            fixture_dir.as_path(),
+            cwd.as_path(),
             HashMap::new(),
             Some(5_000),
             std::slice::from_ref(&secret_path),
@@ -274,14 +275,14 @@ fn legacy_non_tty_cmd_honors_deny_read_overrides() {
 
         let secret_read = spawn_windows_sandbox_session_legacy(
             "workspace-write",
-            fixture_dir.as_path(),
+            cwd.as_path(),
             codex_home.path(),
             vec![
                 "C:\\Windows\\System32\\cmd.exe".to_string(),
                 "/c".to_string(),
-                "type \"secret.env\" 2>NUL".to_string(),
+                format!("type \"{}\" 2>NUL", secret_path.display()),
             ],
-            fixture_dir.as_path(),
+            cwd.as_path(),
             HashMap::new(),
             Some(5_000),
             std::slice::from_ref(&secret_path),
